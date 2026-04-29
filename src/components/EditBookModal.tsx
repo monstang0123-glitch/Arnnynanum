@@ -104,7 +104,6 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, book }: Edit
         // Sending them back can cause precision issues with Timestamps.
         updatedAt: new Date() // Optional: add an updatedAt field if desired
       });
-      alert('บันทึกการแก้ไขเรียบร้อยแล้ว');
       onSuccess();
       onClose();
     } catch (error: any) {
