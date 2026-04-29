@@ -26,6 +26,8 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { Book, GENRES, Genre, OperationType } from './types';
 import BookCard from './components/BookCard';
 import AddBookModal from './components/AddBookModal';
+import EditBookModal from './components/EditBookModal';
+import DeleteConfirmationModal from './components/DeleteConfirmationModal';
 import { handleFirestoreError } from './lib/errorUtils';
 
 export default function App() {
@@ -35,6 +37,10 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGenre, setSelectedGenre] = useState<Genre | 'All'>('All');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [editingBook, setEditingBook] = useState<Book | null>(null);
+  const [deletingBook, setDeletingBook] = useState<Book | null>(null);
   const [likedBookIds, setLikedBookIds] = useState<string[]>([]);
   const [showOnlyLiked, setShowOnlyLiked] = useState(false);
 
@@ -128,14 +134,39 @@ export default function App() {
     }
   };
 
+  const handleEditBook = (book: Book) => {
+    setEditingBook(book);
+    setIsEditModalOpen(true);
+  };
+
+  const handleOpenDeleteConfirm = (book: Book) => {
+    setDeletingBook(book);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteBook = async () => {
+    if (!deletingBook || !deletingBook.id) return;
+    
+    const path = 'books';
+    try {
+      await deleteDoc(doc(db, path, deletingBook.id));
+      setIsDeleteModalOpen(false);
+      setDeletingBook(null);
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      alert('ไม่สามารถลบโพสต์ได้: ' + (error.message || 'Permission denied'));
+      handleFirestoreError(error, OperationType.DELETE, path);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text font-sans selection:bg-brand-orange selection:text-white flex flex-col">
       {/* Navigation */}
       <header className="sticky top-0 z-40 bg-brand-bg/80 backdrop-blur-md border-b border-black/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-10 h-24 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="text-3xl font-black tracking-tighter uppercase">
-              อ่าน<span className="text-brand-orange">นี่</span>
+            <div className="text-4xl md:text-5xl font-black tracking-tighter uppercase cursor-default select-none group">
+              อ่าน<span className="text-brand-orange inline-block group-hover:rotate-12 transition-transform duration-300">นี่</span>
             </div>
           </div>
 
@@ -200,30 +231,33 @@ export default function App() {
         {/* Sidebar: Categories */}
         <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-black/5 p-6 md:p-10 flex flex-col gap-6">
           <div className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-orange mb-2">ของฉัน</div>
-          <ul className="flex flex-col gap-4 mb-4">
+          <ul className="flex flex-col gap-3 mb-4">
             <li 
               onClick={() => {
                 setShowOnlyLiked(!showOnlyLiked);
                 if (!showOnlyLiked) setSelectedGenre('All');
               }}
-              className={`font-black text-lg cursor-pointer whitespace-nowrap transition-all flex items-center gap-3 ${showOnlyLiked ? 'text-brand-orange translate-x-1' : 'text-gray-400 hover:text-brand-text'}`}
+              className={`px-4 py-3 rounded-xl font-bold text-sm cursor-pointer transition-all flex items-center justify-between group ${showOnlyLiked ? 'bg-red-500 text-white shadow-lg shadow-red-500/20 scale-[1.02]' : 'bg-white border border-black/5 text-gray-400 hover:border-red-500/30 hover:text-red-500 shadow-sm'}`}
             >
-              <BookHeart size={20} fill={showOnlyLiked ? "currentColor" : "none"} />
-              รายการที่ถูกใจ
+              <div className="flex items-center gap-3">
+                <BookHeart size={18} fill={showOnlyLiked ? "currentColor" : "none"} />
+                รายการที่ถูกใจ
+              </div>
+              <span className={`opacity-0 group-hover:opacity-100 transition-opacity ${showOnlyLiked ? 'opacity-100' : ''}`}>→</span>
             </li>
           </ul>
 
           <div className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-orange mb-2">หมวดหมู่</div>
-          <ul className="flex flex-row md:flex-col gap-4 overflow-x-auto md:overflow-x-visible pb-4 md:pb-0 scrollbar-hide">
+          <ul className="grid grid-cols-2 md:flex md:flex-col gap-3 overflow-x-auto md:overflow-x-visible pb-4 md:pb-0 scrollbar-hide">
             <li 
               onClick={() => {
                 setSelectedGenre('All');
                 setShowOnlyLiked(false);
               }}
-              className={`font-black text-lg cursor-pointer whitespace-nowrap transition-all flex items-center gap-2 ${selectedGenre === 'All' && !showOnlyLiked ? 'text-brand-text translate-x-1' : 'text-gray-400 hover:text-brand-text'}`}
+              className={`px-4 py-3 rounded-xl font-bold text-sm cursor-pointer transition-all text-center md:text-left flex items-center justify-between group ${selectedGenre === 'All' && !showOnlyLiked ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20 scale-[1.02]' : 'bg-white border border-black/5 text-gray-400 hover:border-brand-orange/30 hover:text-brand-text shadow-sm'}`}
             >
-              <span className={selectedGenre === 'All' && !showOnlyLiked ? 'block' : 'hidden'}>→</span>
-              # ทั้งหมด
+              ทั้งหมด
+              <span className={`opacity-0 group-hover:opacity-100 transition-opacity ${selectedGenre === 'All' && !showOnlyLiked ? 'opacity-100' : ''}`}>→</span>
             </li>
             {GENRES.map(genre => (
               <li 
@@ -232,10 +266,10 @@ export default function App() {
                   setSelectedGenre(genre);
                   setShowOnlyLiked(false);
                 }}
-                className={`font-black text-lg cursor-pointer whitespace-nowrap transition-all flex items-center gap-2 ${selectedGenre === genre ? 'text-brand-text translate-x-1' : 'text-gray-400 hover:text-brand-text'}`}
+                className={`px-4 py-3 rounded-xl font-bold text-sm cursor-pointer transition-all text-center md:text-left flex items-center justify-between group ${selectedGenre === genre ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20 scale-[1.02]' : 'bg-white border border-black/5 text-gray-400 hover:border-brand-orange/30 hover:text-brand-text shadow-sm'}`}
               >
-                <span className={selectedGenre === genre ? 'block' : 'hidden'}>→</span>
-                # {genre}
+                {genre}
+                <span className={`opacity-0 group-hover:opacity-100 transition-opacity ${selectedGenre === genre ? 'opacity-100' : ''}`}>→</span>
               </li>
             ))}
           </ul>
@@ -270,7 +304,10 @@ export default function App() {
                 </button>
               )}
             </div>
-            <div className="relative">
+            <div 
+              className="relative cursor-pointer"
+              onClick={() => document.getElementById('recommendations-section')?.scrollIntoView({ behavior: 'smooth' })}
+            >
               <div className="w-48 h-64 bg-stone-100 rounded-2xl shadow-2xl overflow-hidden flex items-center justify-center border-4 border-white transform rotate-6 group-hover:rotate-2 transition-transform duration-500">
                 <div className="bg-brand-orange w-full h-full p-6 flex flex-col justify-between text-white">
                   <div className="text-3xl font-black leading-[0.9] tracking-tighter">READ<br/>NEXT</div>
@@ -280,8 +317,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* Recommendations Feed */}
-          <div className="flex flex-col gap-8">
+          <div id="recommendations-section" className="flex flex-col gap-8">
             <div className="flex items-center justify-between">
               <h2 className="text-3xl font-black italic tracking-tight uppercase">แนะนำโดยเพื่อนนักอ่าน</h2>
               <div className="text-xs font-black text-gray-400 uppercase tracking-widest">
@@ -302,6 +338,8 @@ export default function App() {
                       book={book} 
                       isLiked={likedBookIds.includes(book.id || '')}
                       onToggleLike={() => handleToggleLike(book.id || '')}
+                      onEdit={() => handleEditBook(book)}
+                      onDelete={() => handleOpenDeleteConfirm(book)}
                     />
                   ))}
                 </AnimatePresence>
@@ -363,6 +401,26 @@ export default function App() {
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         onSuccess={() => {}}
+      />
+
+      <EditBookModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingBook(null);
+        }}
+        onSuccess={() => {}}
+        book={editingBook}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        title={deletingBook?.title || ''}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setDeletingBook(null);
+        }}
+        onConfirm={handleDeleteBook}
       />
     </div>
   );

@@ -1,17 +1,23 @@
 import { motion } from 'motion/react';
-import { Book as BookIcon, User, Tag, Heart } from 'lucide-react';
+import { Book as BookIcon, User, Tag, Heart, Pencil, Trash2 } from 'lucide-react';
 import { Book } from '../types';
+import { auth } from '../lib/firebase';
 
 interface BookCardProps {
+  key?: string;
   book: Book;
   isLiked?: boolean;
   onToggleLike?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
-export default function BookCard({ book, isLiked, onToggleLike }: BookCardProps) {
+export default function BookCard({ book, isLiked, onToggleLike, onEdit, onDelete }: BookCardProps) {
   const formattedDate = book.createdAt instanceof Date 
     ? book.createdAt.toLocaleDateString() 
     : (book.createdAt as any)?.toDate?.()?.toLocaleDateString() || 'N/A';
+
+  const isOwner = auth.currentUser?.uid === book.addedBy;
 
   return (
     <motion.div
@@ -48,6 +54,33 @@ export default function BookCard({ book, isLiked, onToggleLike }: BookCardProps)
           >
             <Heart size={18} fill={isLiked ? "currentColor" : "none"} strokeWidth={2.5} />
           </motion.button>
+          
+          {isOwner && (
+            <div className="flex gap-2">
+              <motion.button 
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit?.();
+                }}
+                className="p-2.5 rounded-full backdrop-blur-md shadow-lg transition-all bg-white/90 text-stone-400 hover:text-brand-orange"
+              >
+                <Pencil size={18} strokeWidth={2.5} />
+              </motion.button>
+              <motion.button 
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete?.();
+                }}
+                className="p-2.5 rounded-full backdrop-blur-md shadow-lg transition-all bg-white/90 text-stone-400 hover:text-red-500"
+              >
+                <Trash2 size={18} strokeWidth={2.5} />
+              </motion.button>
+            </div>
+          )}
         </div>
         <div className="absolute top-6 right-6">
           <span className="px-3 py-1 bg-black text-white text-[9px] font-black uppercase tracking-widest rounded-full shadow-lg">

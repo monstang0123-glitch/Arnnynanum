@@ -27,7 +27,7 @@ service cloud.firestore {
       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
 
-    function isValidBook(data) {
+    function isValidBook(data, isUpdate) {
       return data.keys().hasAll(['title', 'author', 'genre', 'addedBy', 'createdAt'])
         && data.title is string && data.title.size() <= 200
         && data.author is string && data.author.size() <= 100
@@ -35,7 +35,7 @@ service cloud.firestore {
         && (data.description == null || (data.description is string && data.description.size() <= 1000))
         && (data.coverUrl == null || (data.coverUrl is string && data.coverUrl.size() <= 1500000))
         && data.addedBy == request.auth.uid
-        && data.createdAt == request.time;
+        && (isUpdate || data.createdAt == request.time);
     }
 
     // --- Collections ---
@@ -45,10 +45,10 @@ service cloud.firestore {
       allow get: if true;
       allow list: if true; // The UI will handle filtering/searching but anyone can browse
       
-      allow create: if isSignedIn() && isValidBook(incoming());
+      allow create: if isSignedIn() && isValidBook(incoming(), false);
       allow delete: if isOwner(existing());
       allow update: if isOwner(existing()) 
-        && isValidBook(incoming())
+        && isValidBook(incoming(), true)
         && incoming().addedBy == existing().addedBy
         && incoming().createdAt == existing().createdAt;
     }

@@ -1,20 +1,21 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Plus, Book as BookIcon, Loader2, Crop } from 'lucide-react';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { X, Save, Book as BookIcon, Loader2, Crop, Plus } from 'lucide-react';
+import { doc, updateDoc } from 'firebase/firestore';
 import Cropper, { Area } from 'react-easy-crop';
 import { db, auth } from '../lib/firebase';
-import { GENRES, Genre, OperationType } from '../types';
+import { GENRES, Genre, OperationType, Book } from '../types';
 import { handleFirestoreError } from '../lib/errorUtils';
 import getCroppedImg from '../lib/cropImage';
 
-interface AddBookModalProps {
+interface EditBookModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  book: Book | null;
 }
 
-export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModalProps) {
+export default function EditBookModal({ isOpen, onClose, onSuccess, book }: EditBookModalProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -30,6 +31,19 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
 
+  useEffect(() => {
+    if (book) {
+      setFormData({
+        title: book.title,
+        author: book.author,
+        genre: book.genre,
+        description: book.description || '',
+        coverUrl: book.coverUrl || ''
+      });
+      setPreview(book.coverUrl || null);
+    }
+  }, [book]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent) => {
     let file: File | null = null;
     
@@ -40,7 +54,7 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
     }
 
     if (file) {
-      if (file.size > 2 * 1024 * 1024) { // Increase limit slightly as we will crop/compress
+      if (file.size > 2 * 1024 * 1024) {
         alert('รูปภาพต้องมีขนาดไม่เกิน 2MB');
         return;
       }
@@ -72,7 +86,7 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth.currentUser) return;
+    if (!auth.currentUser || !book || !book.id) return;
     if (!formData.coverUrl) {
       alert('กรุณาเลือกรูปภาพหน้าปก');
       return;
@@ -81,27 +95,21 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
     setLoading(true);
     const path = 'books';
     try {
-      await addDoc(collection(db, path), {
+      const bookRef = doc(db, path, book.id);
+      await updateDoc(bookRef, {
         ...formData,
-        addedBy: auth.currentUser.uid,
-        addedByName: auth.currentUser.displayName,
-        addedByEmail: auth.currentUser.email,
-        createdAt: serverTimestamp()
+        // addedBy and createdAt are immutable and already exist in the document.
+        // Merging happens in Firestore rules (request.resource.data).
+        // Sending them back can cause precision issues with Timestamps.
+        updatedAt: new Date() // Optional: add an updatedAt field if desired
       });
+      alert('บันทึกการแก้ไขเรียบร้อยแล้ว');
       onSuccess();
       onClose();
-      setPreview(null);
-      setFormData({
-        title: '',
-        author: '',
-        genre: 'นิยาย',
-        description: '',
-        coverUrl: ''
-      });
     } catch (error: any) {
-      console.error('Submission error:', error);
-      alert('ไม่สามารถเพิ่มหนังสือได้: ' + (error.message || 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ'));
-      handleFirestoreError(error, OperationType.CREATE, path);
+      console.error('Update error:', error);
+      alert('ไม่สามารถแก้ไขข้อมูลได้: ' + (error.message || 'เกิดข้อผิดพลาด'));
+      handleFirestoreError(error, OperationType.UPDATE, path);
     } finally {
       setLoading(false);
     }
@@ -123,10 +131,9 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             className="relative bg-brand-bg w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden border border-black/5"
-            id="add-book-modal"
           >
             <div className="p-10 pb-6 border-bottom border-black/5 flex items-center justify-between">
-              <h2 className="font-black text-3xl tracking-tighter italic text-brand-text">แนะนำหนังสือใหม่</h2>
+              <h2 className="font-black text-3xl tracking-tighter italic text-brand-text">แก้ไขคำแนะนำ</h2>
               <button
                 onClick={onClose}
                 className="p-3 hover:bg-black/5 rounded-full transition-colors text-stone-400 hover:text-brand-text"
@@ -147,7 +154,7 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
                     e.preventDefault();
                     handleFileChange(e);
                   }}
-                  onClick={() => document.getElementById('file-upload')?.click()}
+                  onClick={() => document.getElementById('edit-file-upload')?.click()}
                 >
                   {preview ? (
                     <>
@@ -168,7 +175,7 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
                     </div>
                   )}
                   <input 
-                    id="file-upload"
+                    id="edit-file-upload"
                     type="file" 
                     accept="image/*"
                     className="hidden" 
@@ -244,15 +251,14 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
                     <Loader2 className="animate-spin" size={24} />
                   ) : (
                     <>
-                      <Plus size={24} strokeWidth={3} />
-                      เพิ่มคำแนะนำ
+                      <Save size={24} strokeWidth={3} />
+                      บันทึกการแก้ไข
                     </>
                   )}
                 </button>
               </div>
             </form>
 
-            {/* Image Cropper Overlay */}
             <AnimatePresence>
               {imageToCrop && (
                 <motion.div 
@@ -298,7 +304,7 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
                         className="flex-1 py-4 bg-brand-orange text-white font-black uppercase tracking-widest rounded-xl hover:bg-orange-700 transition-all flex items-center justify-center gap-2"
                       >
                         <Crop size={20} />
-                        ยืนยันขนาดรูป
+                        ยืนยันรูปภาพ
                       </button>
                     </div>
                   </div>
