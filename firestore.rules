@@ -1,0 +1,63 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(existingData) {
+      return isSignedIn() && existingData.addedBy == request.auth.uid;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidBook(data) {
+      return data.keys().hasAll(['title', 'author', 'genre', 'addedBy', 'createdAt'])
+        && data.title is string && data.title.size() <= 200
+        && data.author is string && data.author.size() <= 100
+        && data.genre is string && data.genre.size() <= 50
+        && (data.description == null || (data.description is string && data.description.size() <= 1000))
+        && (data.coverUrl == null || (data.coverUrl is string && data.coverUrl.size() <= 1000))
+        && data.addedBy == request.auth.uid
+        && data.createdAt == request.time;
+    }
+
+    // --- Collections ---
+
+    match /books/{bookId} {
+      // Anyone can see recommendations
+      allow get: if true;
+      allow list: if true; // The UI will handle filtering/searching but anyone can browse
+
+      // Only signed in users can create
+      allow create: if isSignedIn() && isValidBook(incoming());
+
+      // Only owner can delete
+      allow delete: if isOwner(existing());
+
+      // Updates are not typical for this app yet, but maybe allowing 
+      // some fields. For now, let's keep it simple: no updates or 
+      // strictly owner-only for specific fields.
+      allow update: if isOwner(existing()) 
+        && isValidBook(incoming())
+        && incoming().addedBy == existing().addedBy
+        && incoming().createdAt == existing().createdAt;
+    }
+  }
+}

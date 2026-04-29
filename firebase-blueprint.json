@@ -1,0 +1,51 @@
+{
+  "entities": {
+    "Book": {
+      "title": "Book Recommendation",
+      "description": "A book shared by a community member.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Title of the book"
+        },
+        "author": {
+          "type": "string",
+          "description": "Author of the book"
+        },
+        "genre": {
+          "type": "string",
+          "description": "Genre/Category of the book"
+        },
+        "description": {
+          "type": "string",
+          "description": "Reason for recommendation or book summary"
+        },
+        "coverUrl": {
+          "type": "string",
+          "description": "URL to the book cover image"
+        },
+        "addedBy": {
+          "type": "string",
+          "description": "UID of the user who added the recommendation"
+        },
+        "addedByName": {
+          "type": "string",
+           "description": "Display name of the user"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the book was added"
+        }
+      },
+      "required": ["title", "author", "genre", "addedBy", "createdAt"]
+    }
+  },
+  "firestore": {
+    "books": {
+      "schema": "Book",
+      "description": "Collection of community book recommendations"
+    }
+  }
+}
