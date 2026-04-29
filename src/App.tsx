@@ -14,7 +14,12 @@ import {
   collection, 
   query, 
   orderBy, 
-  onSnapshot 
+  onSnapshot,
+  where,
+  doc,
+  setDoc,
+  deleteDoc,
+  serverTimestamp
 } from 'firebase/firestore';
 import { auth, db, signInWithGoogle, logout } from './lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
@@ -30,6 +35,8 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGenre, setSelectedGenre] = useState<Genre | 'All'>('All');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [likedBookIds, setLikedBookIds] = useState<string[]>([]);
+  const [showOnlyLiked, setShowOnlyLiked] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currUser) => {
@@ -57,14 +64,34 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (!user) {
+      setLikedBookIds([]);
+      return;
+    }
+
+    const path = 'likes';
+    const q = query(collection(db, path), where('userId', '==', user.uid));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const ids = snapshot.docs.map(doc => doc.data().bookId);
+      setLikedBookIds(ids);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, path);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
   const filteredBooks = useMemo(() => {
     return books.filter(book => {
       const matchesSearch = book.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                            book.author.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesGenre = selectedGenre === 'All' || book.genre === selectedGenre;
-      return matchesSearch && matchesGenre;
+      const matchesLiked = !showOnlyLiked || likedBookIds.includes(book.id || '');
+      return matchesSearch && matchesGenre && matchesLiked;
     });
-  }, [books, searchQuery, selectedGenre]);
+  }, [books, searchQuery, selectedGenre, showOnlyLiked, likedBookIds]);
 
   const handleLogin = async () => {
     try {
@@ -72,6 +99,30 @@ export default function App() {
     } catch (error: any) {
       console.error('Sign in error:', error);
       alert(`ไม่สามารถเข้าสู่ระบบได้: ${error.message || 'กรุณาลองใหม่อีกครั้ง'}`);
+    }
+  };
+
+  const handleToggleLike = async (bookId: string) => {
+    if (!user) {
+      handleLogin();
+      return;
+    }
+
+    const likeId = `${user.uid}_${bookId}`;
+    const likeRef = doc(db, 'likes', likeId);
+
+    try {
+      if (likedBookIds.includes(bookId)) {
+        await deleteDoc(likeRef);
+      } else {
+        await setDoc(likeRef, {
+          userId: user.uid,
+          bookId: bookId,
+          createdAt: serverTimestamp()
+        });
+      }
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, 'likes');
     }
   };
 
@@ -146,19 +197,39 @@ export default function App() {
       <main className="flex-1 flex flex-col md:flex-row max-w-7xl mx-auto w-full">
         {/* Sidebar: Categories */}
         <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-black/5 p-6 md:p-10 flex flex-col gap-6">
+          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-orange mb-2">ของฉัน</div>
+          <ul className="flex flex-col gap-4 mb-4">
+            <li 
+              onClick={() => {
+                setShowOnlyLiked(!showOnlyLiked);
+                if (!showOnlyLiked) setSelectedGenre('All');
+              }}
+              className={`font-black text-lg cursor-pointer whitespace-nowrap transition-all flex items-center gap-3 ${showOnlyLiked ? 'text-brand-orange translate-x-1' : 'text-gray-400 hover:text-brand-text'}`}
+            >
+              <BookHeart size={20} fill={showOnlyLiked ? "currentColor" : "none"} />
+              รายการที่ถูกใจ
+            </li>
+          </ul>
+
           <div className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-orange mb-2">หมวดหมู่</div>
           <ul className="flex flex-row md:flex-col gap-4 overflow-x-auto md:overflow-x-visible pb-4 md:pb-0 scrollbar-hide">
             <li 
-              onClick={() => setSelectedGenre('All')}
-              className={`font-black text-lg cursor-pointer whitespace-nowrap transition-all flex items-center gap-2 ${selectedGenre === 'All' ? 'text-brand-text translate-x-1' : 'text-gray-400 hover:text-brand-text'}`}
+              onClick={() => {
+                setSelectedGenre('All');
+                setShowOnlyLiked(false);
+              }}
+              className={`font-black text-lg cursor-pointer whitespace-nowrap transition-all flex items-center gap-2 ${selectedGenre === 'All' && !showOnlyLiked ? 'text-brand-text translate-x-1' : 'text-gray-400 hover:text-brand-text'}`}
             >
-              <span className={selectedGenre === 'All' ? 'block' : 'hidden'}>→</span>
+              <span className={selectedGenre === 'All' && !showOnlyLiked ? 'block' : 'hidden'}>→</span>
               # ทั้งหมด
             </li>
             {GENRES.map(genre => (
               <li 
                 key={genre}
-                onClick={() => setSelectedGenre(genre)}
+                onClick={() => {
+                  setSelectedGenre(genre);
+                  setShowOnlyLiked(false);
+                }}
                 className={`font-black text-lg cursor-pointer whitespace-nowrap transition-all flex items-center gap-2 ${selectedGenre === genre ? 'text-brand-text translate-x-1' : 'text-gray-400 hover:text-brand-text'}`}
               >
                 <span className={selectedGenre === genre ? 'block' : 'hidden'}>→</span>
@@ -222,9 +293,14 @@ export default function App() {
               </div>
             ) : filteredBooks.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                <AnimatePresence>
+                <AnimatePresence mode="popLayout">
                   {filteredBooks.map((book) => (
-                    <BookCard key={book.id} book={book} />
+                    <BookCard 
+                      key={book.id} 
+                      book={book} 
+                      isLiked={likedBookIds.includes(book.id || '')}
+                      onToggleLike={() => handleToggleLike(book.id || '')}
+                    />
                   ))}
                 </AnimatePresence>
 

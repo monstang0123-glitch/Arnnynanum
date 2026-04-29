@@ -12,6 +12,12 @@ export interface Book {
   createdAt: Timestamp | Date;
 }
 
+export interface Like {
+  id?: string;
+  userId: string;
+  bookId: string;
+}
+
 export type Genre = 
   | 'นิยาย' 
   | 'วิชาการ/สารคดี' 

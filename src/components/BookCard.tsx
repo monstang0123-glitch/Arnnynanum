@@ -1,12 +1,14 @@
 import { motion } from 'motion/react';
-import { Book as BookIcon, User, Tag } from 'lucide-react';
+import { Book as BookIcon, User, Tag, Heart } from 'lucide-react';
 import { Book } from '../types';
 
 interface BookCardProps {
   book: Book;
+  isLiked?: boolean;
+  onToggleLike?: () => void;
 }
 
-export default function BookCard({ book }: BookCardProps) {
+export default function BookCard({ book, isLiked, onToggleLike }: BookCardProps) {
   const formattedDate = book.createdAt instanceof Date 
     ? book.createdAt.toLocaleDateString() 
     : (book.createdAt as any)?.toDate?.()?.toLocaleDateString() || 'N/A';
@@ -18,7 +20,7 @@ export default function BookCard({ book }: BookCardProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       whileHover={{ y: -8, shadow: "0 25px 50px -12px rgb(0 0 0 / 0.15)" }}
-      className="bg-white rounded-[2rem] overflow-hidden border border-black/5 flex flex-col h-full hover:shadow-2xl transition-all duration-300"
+      className="bg-white rounded-[2rem] overflow-hidden border border-black/5 flex flex-col h-full hover:shadow-2xl transition-all duration-300 relative group/card"
       id={`book-card-${book.id}`}
     >
       <div className="relative aspect-[3/4] bg-stone-50 overflow-hidden p-4">
@@ -34,6 +36,17 @@ export default function BookCard({ book }: BookCardProps) {
             <BookIcon size={48} strokeWidth={1} />
           </div>
         )}
+        <div className="absolute top-6 left-6 flex items-center gap-2">
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleLike?.();
+            }}
+            className={`p-2 rounded-full backdrop-blur-md shadow-lg transition-all transform active:scale-95 ${isLiked ? 'bg-red-500 text-white' : 'bg-white/80 text-stone-400 hover:text-red-500'}`}
+          >
+            <Heart size={16} fill={isLiked ? "currentColor" : "none"} strokeWidth={3} />
+          </button>
+        </div>
         <div className="absolute top-6 right-6">
           <span className="px-3 py-1 bg-black text-white text-[9px] font-black uppercase tracking-widest rounded-full shadow-lg">
             {book.genre}

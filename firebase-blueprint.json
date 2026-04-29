@@ -1,5 +1,16 @@
 {
   "entities": {
+    "Like": {
+      "title": "Book Like",
+      "description": "A record of a user liking a book.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "bookId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "bookId", "createdAt"]
+    },
     "Book": {
       "title": "Book Recommendation",
       "description": "A book shared by a community member.",
@@ -46,6 +57,10 @@
     "books": {
       "schema": "Book",
       "description": "Collection of community book recommendations"
+    },
+    "likes": {
+      "schema": "Like",
+      "description": "Relational collection tracking user likes on books"
     }
   }
 }
