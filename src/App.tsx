@@ -230,14 +230,14 @@ export default function App() {
       <main className="flex-1 flex flex-col md:flex-row max-w-7xl mx-auto w-full">
         {/* Sidebar: Categories */}
         <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-black/5 p-6 md:p-10 flex flex-col gap-6">
-          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-orange mb-2">ของฉัน</div>
+          <div className="text-xs font-black uppercase tracking-[0.2em] text-brand-orange mb-2">ของฉัน</div>
           <ul className="flex flex-col gap-3 mb-4">
             <li 
               onClick={() => {
                 setShowOnlyLiked(!showOnlyLiked);
                 if (!showOnlyLiked) setSelectedGenre('All');
               }}
-              className={`px-4 py-3 rounded-xl font-bold text-sm cursor-pointer transition-all flex items-center justify-between group ${showOnlyLiked ? 'bg-red-500 text-white shadow-lg shadow-red-500/20 scale-[1.02]' : 'bg-white border border-black/5 text-gray-400 hover:border-red-500/30 hover:text-red-500 shadow-sm'}`}
+              className={`px-4 py-3 rounded-xl font-bold text-base cursor-pointer transition-all flex items-center justify-between group ${showOnlyLiked ? 'bg-red-500 text-white shadow-lg shadow-red-500/20 scale-[1.02]' : 'bg-white border border-black/5 text-gray-400 hover:border-red-500/30 hover:text-red-500 shadow-sm'}`}
             >
               <div className="flex items-center gap-3">
                 <BookHeart size={18} fill={showOnlyLiked ? "currentColor" : "none"} />
@@ -247,14 +247,14 @@ export default function App() {
             </li>
           </ul>
 
-          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-orange mb-2">หมวดหมู่</div>
+          <div className="text-xs font-black uppercase tracking-[0.2em] text-brand-orange mb-2">หมวดหมู่</div>
           <ul className="grid grid-cols-2 md:flex md:flex-col gap-3 overflow-x-auto md:overflow-x-visible pb-4 md:pb-0 scrollbar-hide">
             <li 
               onClick={() => {
                 setSelectedGenre('All');
                 setShowOnlyLiked(false);
               }}
-              className={`px-4 py-3 rounded-xl font-bold text-sm cursor-pointer transition-all text-center md:text-left flex items-center justify-between group ${selectedGenre === 'All' && !showOnlyLiked ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20 scale-[1.02]' : 'bg-white border border-black/5 text-gray-400 hover:border-brand-orange/30 hover:text-brand-text shadow-sm'}`}
+              className={`px-4 py-3 rounded-xl font-bold text-base cursor-pointer transition-all text-center md:text-left flex items-center justify-between group ${selectedGenre === 'All' && !showOnlyLiked ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20 scale-[1.02]' : 'bg-white border border-black/5 text-gray-400 hover:border-brand-orange/30 hover:text-brand-text shadow-sm'}`}
             >
               ทั้งหมด
               <span className={`opacity-0 group-hover:opacity-100 transition-opacity ${selectedGenre === 'All' && !showOnlyLiked ? 'opacity-100' : ''}`}>→</span>
@@ -266,7 +266,7 @@ export default function App() {
                   setSelectedGenre(genre);
                   setShowOnlyLiked(false);
                 }}
-                className={`px-4 py-3 rounded-xl font-bold text-sm cursor-pointer transition-all text-center md:text-left flex items-center justify-between group ${selectedGenre === genre ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20 scale-[1.02]' : 'bg-white border border-black/5 text-gray-400 hover:border-brand-orange/30 hover:text-brand-text shadow-sm'}`}
+                className={`px-4 py-3 rounded-xl font-bold text-base cursor-pointer transition-all text-center md:text-left flex items-center justify-between group ${selectedGenre === genre ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20 scale-[1.02]' : 'bg-white border border-black/5 text-gray-400 hover:border-brand-orange/30 hover:text-brand-text shadow-sm'}`}
               >
                 {genre}
                 <span className={`opacity-0 group-hover:opacity-100 transition-opacity ${selectedGenre === genre ? 'opacity-100' : ''}`}>→</span>

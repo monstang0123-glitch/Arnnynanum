@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Save, Book as BookIcon, Loader2, Crop, Plus } from 'lucide-react';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -30,6 +30,7 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, book }: Edit
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (book) {
@@ -144,48 +145,48 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, book }: Edit
 
             <form onSubmit={handleSubmit} className="p-10 pt-0 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
               <div className="space-y-4">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-orange ml-1">
+                <label className="text-xs font-black uppercase tracking-[0.2em] text-brand-orange ml-1">
                   รูปหน้าปก *
                 </label>
-                <div 
-                  className={`relative group h-64 border-2 border-dashed rounded-3xl transition-all flex flex-col items-center justify-center overflow-hidden bg-white ${preview ? 'border-brand-orange/50' : 'border-black/10 hover:border-brand-orange/50'}`}
+                <label 
+                  htmlFor="edit-file-upload"
+                  className={`relative cursor-pointer group h-64 border-2 border-dashed rounded-3xl transition-all flex flex-col items-center justify-center overflow-hidden bg-white ${preview ? 'border-brand-orange/50' : 'border-black/10 hover:border-brand-orange/50'}`}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => {
                     e.preventDefault();
                     handleFileChange(e);
                   }}
-                  onClick={() => document.getElementById('edit-file-upload')?.click()}
                 >
                   {preview ? (
                     <>
-                      <img src={preview} alt="Preview" className="w-full h-full object-contain" />
+                      <img src={preview} alt="Preview" className="w-full h-full object-contain pointer-events-none" />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
                         <Plus className="text-white" size={32} />
-                        <span className="text-white text-[10px] font-black uppercase">เปลี่ยนรูป</span>
+                        <span className="text-white text-xs font-black uppercase">เปลี่ยนรูป</span>
                       </div>
                     </>
                   ) : (
-                    <div className="text-center p-6 cursor-pointer">
+                    <div className="text-center p-6">
                       <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4 text-stone-400 group-hover:text-brand-orange transition-colors">
                         <Plus size={32} />
                       </div>
                       <p className="text-sm font-bold text-stone-400 group-hover:text-brand-text transition-colors uppercase tracking-widest leading-relaxed">
-                        คลิกหรือลากรูปภาพมาวาง<br/><span className="text-[10px] font-medium">(สูงสุด 2MB)</span>
+                        คลิกหรือลากรูปภาพมาวาง<br/><span className="text-xs font-medium">(สูงสุด 2MB)</span>
                       </p>
                     </div>
                   )}
-                  <input 
-                    id="edit-file-upload"
-                    type="file" 
-                    accept="image/*"
-                    className="hidden" 
-                    onChange={handleFileChange}
-                  />
-                </div>
+                </label>
+                <input 
+                  id="edit-file-upload"
+                  type="file" 
+                  accept="image/*"
+                  className="sr-only" 
+                  onChange={handleFileChange}
+                />
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-orange ml-1">
+                <label className="text-xs font-black uppercase tracking-[0.2em] text-brand-orange ml-1">
                   ชื่อหนังสือ *
                 </label>
                 <input
@@ -200,7 +201,7 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, book }: Edit
 
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-orange ml-1">
+                  <label className="text-xs font-black uppercase tracking-[0.2em] text-brand-orange ml-1">
                     ผู้เขียน *
                   </label>
                   <input
@@ -213,7 +214,7 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, book }: Edit
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-orange ml-1">
+                  <label className="text-xs font-black uppercase tracking-[0.2em] text-brand-orange ml-1">
                     หมวดหมู่ *
                   </label>
                   <select
@@ -229,7 +230,7 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, book }: Edit
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-orange ml-1">
+                <label className="text-xs font-black uppercase tracking-[0.2em] text-brand-orange ml-1">
                   ทำไมถึงแนะนำเล่มนี้?
                 </label>
                 <textarea
@@ -280,7 +281,7 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, book }: Edit
                   </div>
                   <div className="p-8 bg-black/80 flex flex-col gap-6">
                     <div className="flex flex-col gap-2">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">ซูม</label>
+                      <label className="text-xs font-black uppercase tracking-[0.2em] text-gray-500">ซูม</label>
                       <input
                         type="range"
                         value={zoom}
