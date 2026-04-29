@@ -66,6 +66,15 @@ export default function App() {
     });
   }, [books, searchQuery, selectedGenre]);
 
+  const handleLogin = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error: any) {
+      console.error('Sign in error:', error);
+      alert(`ไม่สามารถเข้าสู่ระบบได้: ${error.message || 'กรุณาลองใหม่อีกครั้ง'}`);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text font-sans selection:bg-brand-orange selection:text-white flex flex-col">
       {/* Navigation */}
@@ -82,7 +91,7 @@ export default function App() {
               <Search className="absolute left-4 w-5 h-5 opacity-40 group-focus-within:text-brand-orange transition-colors" />
               <input 
                 type="text"
-                placeholder="ค้นหาเสนอหนังสือที่อยากอ่าน..."
+                placeholder="ค้นหาชื่อหนังสือที่อยากอ่าน..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-white border border-black/10 rounded-full py-3 pl-12 pr-6 text-sm focus:outline-none focus:border-brand-orange transition-colors shadow-sm font-medium"
@@ -93,6 +102,13 @@ export default function App() {
           <div className="flex items-center gap-4 md:gap-8">
             {user ? (
               <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => setIsModalOpen(true)}
+                  className="hidden sm:flex items-center gap-2 bg-brand-orange text-white px-5 py-2.5 rounded-full text-xs font-black hover:bg-orange-700 transition-all shadow-lg shadow-brand-orange/20 uppercase tracking-widest"
+                >
+                  <Plus size={16} strokeWidth={3} />
+                  แนะนำหนังสือ
+                </button>
                 <div className="hidden lg:flex items-center gap-2">
                   <div className="text-right">
                     <p className="text-[10px] font-black uppercase tracking-widest text-stone-400">READER</p>
@@ -116,7 +132,7 @@ export default function App() {
               </div>
             ) : (
               <button 
-                onClick={signInWithGoogle}
+                onClick={handleLogin}
                 className="bg-brand-orange text-white px-6 py-3 rounded-full text-sm font-black hover:bg-orange-700 transition-all flex items-center gap-2 shadow-lg shadow-brand-orange/20"
               >
                 <LogIn size={18} />
@@ -163,13 +179,21 @@ export default function App() {
                 ค้นหาเล่ม<br/><span className="text-brand-orange">โปรด</span> ถัดไป
               </h2>
               <p className="text-gray-500 text-base leading-relaxed mb-8 font-medium">แบ่งปันความประทับใจจากการอ่านร่วมกับคอมมูนิตี้คนรักตัวหนังสือ</p>
-              {!user && (
+              {!user ? (
                 <button 
-                  onClick={signInWithGoogle}
+                  onClick={handleLogin}
                   className="bg-black text-white px-8 py-4 rounded-2xl font-black flex items-center gap-3 hover:scale-105 transition-transform shadow-xl shadow-black/10 uppercase tracking-tight"
                 >
                   เริ่มร่วมแบ่งปัน
                   <Search size={20} />
+                </button>
+              ) : (
+                <button 
+                  onClick={() => setIsModalOpen(true)}
+                  className="bg-brand-orange text-white px-8 py-4 rounded-2xl font-black flex items-center gap-3 hover:scale-105 transition-transform shadow-xl shadow-brand-orange/20 uppercase tracking-tight"
+                >
+                  เพิ่มการแนะนำของคุณ
+                  <Plus size={20} strokeWidth={3} />
                 </button>
               )}
             </div>
@@ -226,9 +250,20 @@ export default function App() {
                 <div className="p-8 bg-brand-bg rounded-full">
                   <BookHeart size={56} strokeWidth={1} />
                 </div>
-                <div className="text-center space-y-2">
-                  <p className="font-serif text-3xl text-stone-400 italic font-black">ยังไม่พบผลลัพธ์</p>
-                  <p className="text-xs font-black uppercase tracking-widest text-stone-300">ลองเปลี่ยนหมวดหมู่หรือคำค้นหาดูนะ</p>
+                <div className="text-center space-y-4">
+                  <div>
+                    <p className="font-serif text-3xl text-stone-400 italic font-black">ยังไม่พบผลลัพธ์</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-stone-300">ลองเปลี่ยนหมวดหมู่หรือคำค้นหาดูนะ</p>
+                  </div>
+                  {user && (
+                    <button 
+                      onClick={() => setIsModalOpen(true)}
+                      className="bg-brand-orange text-white px-8 py-3 rounded-full text-xs font-black hover:bg-orange-700 transition-all shadow-lg shadow-brand-orange/20 uppercase tracking-widest mx-auto flex items-center gap-2"
+                    >
+                      <Plus size={16} strokeWidth={3} />
+                      เริ่มแนะนำหนังสือเล่มแรกเลย
+                    </button>
+                  )}
                 </div>
               </div>
             )}

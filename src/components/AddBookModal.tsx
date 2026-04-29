@@ -22,9 +22,40 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
     coverUrl: ''
   });
 
+  const [preview, setPreview] = useState<string | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent) => {
+    let file: File | null = null;
+    
+    if ('files' in e.target && e.target.files) {
+      file = e.target.files[0];
+    } else if ('dataTransfer' in e && e.dataTransfer.files) {
+      file = e.dataTransfer.files[0];
+    }
+
+    if (file) {
+      if (file.size > 1024 * 1024) { // 1MB limit for Firestore doc size safety
+        alert('รูปภาพต้องมีขนาดไม่เกิน 1MB');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setPreview(base64String);
+        setFormData({ ...formData, coverUrl: base64String });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!auth.currentUser) return;
+    if (!formData.coverUrl) {
+      alert('กรุณาเลือกรูปภาพหน้าปก');
+      return;
+    }
 
     setLoading(true);
     const path = 'books';
@@ -38,10 +69,11 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
       });
       onSuccess();
       onClose();
+      setPreview(null);
       setFormData({
         title: '',
         author: '',
-        genre: 'Fiction',
+        genre: 'นิยาย',
         description: '',
         coverUrl: ''
       });
@@ -70,7 +102,7 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
             className="relative bg-brand-bg w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden border border-black/5"
             id="add-book-modal"
           >
-            <div className="p-10 border-bottom border-black/5 flex items-center justify-between">
+            <div className="p-10 pb-6 border-bottom border-black/5 flex items-center justify-between">
               <h2 className="font-black text-3xl tracking-tighter italic text-brand-text">แนะนำหนังสือใหม่</h2>
               <button
                 onClick={onClose}
@@ -80,7 +112,47 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-10 pt-0 space-y-6">
+            <form onSubmit={handleSubmit} className="p-10 pt-0 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
+              <div className="space-y-4">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-orange ml-1">
+                  รูปหน้าปก *
+                </label>
+                <div 
+                  className={`relative group h-64 border-2 border-dashed rounded-3xl transition-all flex flex-col items-center justify-center overflow-hidden bg-white ${preview ? 'border-brand-orange/50' : 'border-black/10 hover:border-brand-orange/50'}`}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    handleFileChange(e);
+                  }}
+                  onClick={() => document.getElementById('file-upload')?.click()}
+                >
+                  {preview ? (
+                    <>
+                      <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                        <Plus className="text-white" size={32} />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center p-6 cursor-pointer">
+                      <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4 text-stone-400 group-hover:text-brand-orange transition-colors">
+                        <Plus size={32} />
+                      </div>
+                      <p className="text-sm font-bold text-stone-400 group-hover:text-brand-text transition-colors uppercase tracking-widest leading-relaxed">
+                        คลิกหรือลากรูปภาพมาวาง<br/><span className="text-[10px] font-medium">(สูงสุด 1MB)</span>
+                      </p>
+                    </div>
+                  )}
+                  <input 
+                    id="file-upload"
+                    type="file" 
+                    accept="image/*"
+                    className="hidden" 
+                    onChange={handleFileChange}
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-orange ml-1">
                   ชื่อหนังสือ *
@@ -138,20 +210,7 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-orange ml-1">
-                  ลิงก์รูปหน้าปก (URL)
-                </label>
-                <input
-                  type="url"
-                  value={formData.coverUrl}
-                  onChange={(e) => setFormData({ ...formData, coverUrl: e.target.value })}
-                  placeholder="https://example.com/cover.jpg"
-                  className="w-full px-6 py-4 bg-white border border-black/10 rounded-2xl focus:ring-4 focus:ring-brand-orange/5 focus:border-brand-orange transition-all font-bold text-brand-text placeholder:text-stone-300"
-                />
-              </div>
-
-              <div className="pt-4">
+              <div className="pt-4 pb-10">
                 <button
                   type="submit"
                   disabled={loading}
