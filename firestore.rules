@@ -33,7 +33,7 @@ service cloud.firestore {
         && data.author is string && data.author.size() <= 100
         && data.genre is string && data.genre.size() <= 50
         && (data.description == null || (data.description is string && data.description.size() <= 1000))
-        && (data.coverUrl == null || (data.coverUrl is string && data.coverUrl.size() <= 1000))
+        && (data.coverUrl == null || (data.coverUrl is string && data.coverUrl.size() <= 1500000))
         && data.addedBy == request.auth.uid
         && data.createdAt == request.time;
     }
@@ -55,15 +55,24 @@ service cloud.firestore {
 
     match /likes/{likeId} {
       // likeId should be userId_bookId to ensure uniqueness
-      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow list: if isSignedIn(); // User should filter by their own userId
+      allow get: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
       
       allow create: if isSignedIn() 
         && incoming().userId == request.auth.uid
+        && incoming().bookId is string
         && incoming().createdAt == request.time
         && exists(/databases/$(database)/documents/books/$(incoming().bookId));
         
       allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+      
+      // Allow update just in case setDoc hits an existing doc, 
+      // though handleToggleLike logic tries to avoid it.
+      allow update: if isSignedIn() 
+        && existing().userId == request.auth.uid
+        && incoming().userId == existing().userId
+        && incoming().bookId == existing().bookId
+        && incoming().createdAt == existing().createdAt;
     }
   }
 }

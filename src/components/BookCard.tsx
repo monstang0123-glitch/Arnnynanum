@@ -36,16 +36,18 @@ export default function BookCard({ book, isLiked, onToggleLike }: BookCardProps)
             <BookIcon size={48} strokeWidth={1} />
           </div>
         )}
-        <div className="absolute top-6 left-6 flex items-center gap-2">
-          <button 
+        <div className="absolute top-6 left-6 flex items-center gap-2 z-20">
+          <motion.button 
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
             onClick={(e) => {
               e.stopPropagation();
               onToggleLike?.();
             }}
-            className={`p-2 rounded-full backdrop-blur-md shadow-lg transition-all transform active:scale-95 ${isLiked ? 'bg-red-500 text-white' : 'bg-white/80 text-stone-400 hover:text-red-500'}`}
+            className={`p-2.5 rounded-full backdrop-blur-md shadow-lg transition-all ${isLiked ? 'bg-red-500 text-white' : 'bg-white/90 text-stone-400 hover:text-red-500'}`}
           >
-            <Heart size={16} fill={isLiked ? "currentColor" : "none"} strokeWidth={3} />
-          </button>
+            <Heart size={18} fill={isLiked ? "currentColor" : "none"} strokeWidth={2.5} />
+          </motion.button>
         </div>
         <div className="absolute top-6 right-6">
           <span className="px-3 py-1 bg-black text-white text-[9px] font-black uppercase tracking-widest rounded-full shadow-lg">

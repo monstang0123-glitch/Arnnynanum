@@ -121,7 +121,9 @@ export default function App() {
           createdAt: serverTimestamp()
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Like toggle error:', error);
+      alert('ไม่สามารถบันทึกถูกใจได้: ' + (error.message || 'เกิดข้อผิดพลาด'));
       handleFirestoreError(error, OperationType.WRITE, 'likes');
     }
   };

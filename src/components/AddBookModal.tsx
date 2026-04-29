@@ -34,8 +34,8 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
     }
 
     if (file) {
-      if (file.size > 1024 * 1024) { // 1MB limit for Firestore doc size safety
-        alert('รูปภาพต้องมีขนาดไม่เกิน 1MB');
+      if (file.size > 700 * 1024) { // 700KB limit to account for base64 overhead (final size ~930KB)
+        alert('รูปภาพต้องมีขนาดไม่เกิน 700KB เพื่อความรวดเร็วในการโหลด');
         return;
       }
 
@@ -77,7 +77,9 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
         description: '',
         coverUrl: ''
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Submission error:', error);
+      alert('ไม่สามารถเพิ่มหนังสือได้: ' + (error.message || 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ'));
       handleFirestoreError(error, OperationType.CREATE, path);
     } finally {
       setLoading(false);
