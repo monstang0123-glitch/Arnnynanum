@@ -24,6 +24,7 @@ import {
 import { auth, db, signInWithGoogle, logout } from './lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { Book, GENRES, Genre, OperationType } from './types';
+import { translations, Language } from './lib/translations';
 import BookCard from './components/BookCard';
 import AddBookModal from './components/AddBookModal';
 import EditBookModal from './components/EditBookModal';
@@ -43,6 +44,9 @@ export default function App() {
   const [deletingBook, setDeletingBook] = useState<Book | null>(null);
   const [likedBookIds, setLikedBookIds] = useState<string[]>([]);
   const [showOnlyLiked, setShowOnlyLiked] = useState(false);
+  const [lang, setLang] = useState<Language>('EN');
+
+  const t = translations[lang];
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currUser) => {
@@ -104,7 +108,7 @@ export default function App() {
       await signInWithGoogle();
     } catch (error: any) {
       console.error('Sign in error:', error);
-      alert(`ไม่สามารถเข้าสู่ระบบได้: ${error.message || 'กรุณาลองใหม่อีกครั้ง'}`);
+      alert(`Login failed: ${error.message || 'Please try again'}`);
     }
   };
 
@@ -129,7 +133,7 @@ export default function App() {
       }
     } catch (error: any) {
       console.error('Like toggle error:', error);
-      alert('ไม่สามารถบันทึกถูกใจได้: ' + (error.message || 'เกิดข้อผิดพลาด'));
+      alert('Could not like: ' + (error.message || 'Error occurred'));
       handleFirestoreError(error, OperationType.WRITE, 'likes');
     }
   };
@@ -154,7 +158,7 @@ export default function App() {
       setDeletingBook(null);
     } catch (error: any) {
       console.error('Delete error:', error);
-      alert('ไม่สามารถลบโพสต์ได้: ' + (error.message || 'Permission denied'));
+      alert('Could not delete post: ' + (error.message || 'Permission denied'));
       handleFirestoreError(error, OperationType.DELETE, path);
     }
   };
@@ -175,7 +179,7 @@ export default function App() {
               <Search className="absolute left-4 w-5 h-5 opacity-40 group-focus-within:text-brand-orange transition-colors" />
               <input 
                 type="text"
-                placeholder="ค้นหาชื่อหนังสือที่อยากอ่าน..."
+                placeholder={t.searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-white border border-black/10 rounded-full py-3 pl-12 pr-6 text-sm focus:outline-none focus:border-brand-orange transition-colors shadow-sm font-medium"
@@ -191,7 +195,7 @@ export default function App() {
                   className="hidden sm:flex items-center gap-2 bg-brand-orange text-white px-5 py-2.5 rounded-full text-xs font-black hover:bg-orange-700 transition-all shadow-lg shadow-brand-orange/20 uppercase tracking-widest"
                 >
                   <Plus size={16} strokeWidth={3} />
-                  แนะนำหนังสือ
+                  {t.recommendBtn}
                 </button>
                 <div className="hidden lg:flex items-center gap-2">
                   <div className="text-right">
@@ -209,7 +213,7 @@ export default function App() {
                 <button 
                   onClick={logout}
                   className="p-2.5 hover:bg-black/5 rounded-full transition-colors text-stone-400 hover:text-brand-text"
-                  title="Log out"
+                  title={t.logout}
                 >
                   <LogOut size={20} />
                 </button>
@@ -220,7 +224,7 @@ export default function App() {
                 className="bg-brand-orange text-white px-6 py-3 rounded-full text-sm font-black hover:bg-orange-700 transition-all flex items-center gap-2 shadow-lg shadow-brand-orange/20"
               >
                 <LogIn size={18} />
-                <span className="uppercase tracking-tight">เข้าสู่ระบบ</span>
+                <span className="uppercase tracking-tight">{t.login}</span>
               </button>
             )}
           </div>
@@ -230,7 +234,7 @@ export default function App() {
       <main className="flex-1 flex flex-col md:flex-row max-w-7xl mx-auto w-full">
         {/* Sidebar: Categories */}
         <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-black/5 p-6 md:p-10 flex flex-col gap-6">
-          <div className="text-xs font-black uppercase tracking-[0.2em] text-brand-orange mb-2">ของฉัน</div>
+          <div className="text-xs font-black uppercase tracking-[0.2em] text-brand-orange mb-2">{t.myLibrary}</div>
           <ul className="flex flex-col gap-3 mb-4">
             <li 
               onClick={() => {
@@ -241,13 +245,13 @@ export default function App() {
             >
               <div className="flex items-center gap-3">
                 <BookHeart size={18} fill={showOnlyLiked ? "currentColor" : "none"} />
-                รายการที่ถูกใจ
+                {t.likedList}
               </div>
               <span className={`opacity-0 group-hover:opacity-100 transition-opacity ${showOnlyLiked ? 'opacity-100' : ''}`}>→</span>
             </li>
           </ul>
 
-          <div className="text-xs font-black uppercase tracking-[0.2em] text-brand-orange mb-2">หมวดหมู่</div>
+          <div className="text-xs font-black uppercase tracking-[0.2em] text-brand-orange mb-2">{t.categories}</div>
           <ul className="grid grid-cols-2 md:flex md:flex-col gap-3 overflow-x-auto md:overflow-x-visible pb-4 md:pb-0 scrollbar-hide">
             <li 
               onClick={() => {
@@ -256,7 +260,7 @@ export default function App() {
               }}
               className={`px-4 py-3 rounded-xl font-bold text-base cursor-pointer transition-all text-center md:text-left flex items-center justify-between group ${selectedGenre === 'All' && !showOnlyLiked ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20 scale-[1.02]' : 'bg-white border border-black/5 text-gray-400 hover:border-brand-orange/30 hover:text-brand-text shadow-sm'}`}
             >
-              ทั้งหมด
+              {t.all}
               <span className={`opacity-0 group-hover:opacity-100 transition-opacity ${selectedGenre === 'All' && !showOnlyLiked ? 'opacity-100' : ''}`}>→</span>
             </li>
             {GENRES.map(genre => (
@@ -268,7 +272,7 @@ export default function App() {
                 }}
                 className={`px-4 py-3 rounded-xl font-bold text-base cursor-pointer transition-all text-center md:text-left flex items-center justify-between group ${selectedGenre === genre ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20 scale-[1.02]' : 'bg-white border border-black/5 text-gray-400 hover:border-brand-orange/30 hover:text-brand-text shadow-sm'}`}
               >
-                {genre}
+                {t[genre.toLowerCase().replace('/', '').replace(/-/g, '') as keyof typeof t] || genre}
                 <span className={`opacity-0 group-hover:opacity-100 transition-opacity ${selectedGenre === genre ? 'opacity-100' : ''}`}>→</span>
               </li>
             ))}
@@ -280,18 +284,30 @@ export default function App() {
           
           {/* Featured Hero Area (Static for now as per theme) */}
           <div className="relative bg-white rounded-[2.5rem] p-8 md:p-12 flex flex-col lg:flex-row items-center justify-between border border-black/5 overflow-hidden group shadow-sm">
+            {/* Language Toggle Button as requested in image */}
+            <div className="absolute top-6 right-8 z-20">
+              <button 
+                onClick={() => setLang(lang === 'TH' ? 'EN' : 'TH')}
+                className="bg-black/5 hover:bg-black/10 px-4 py-2 rounded-full text-[10px] font-black tracking-widest transition-all flex items-center gap-2"
+              >
+                <span className={lang === 'TH' ? 'text-brand-orange' : 'text-stone-400'}>TH</span>
+                <span className="text-stone-300">|</span>
+                <span className={lang === 'EN' ? 'text-brand-orange' : 'text-stone-400'}>ENG</span>
+              </button>
+            </div>
+
             <div className="relative z-10 max-w-lg mb-8 lg:mb-0">
-              <div className="inline-block bg-black text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-4">ไฮไลท์ประจำสัปดาห์</div>
+              <div className="inline-block bg-black text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-4">{t.weeklyHighlight}</div>
               <h2 className="text-5xl md:text-7xl font-black leading-[1.1] md:leading-[1.15] tracking-tighter mb-6 italic">
-                ค้นหาเล่ม<br/><span className="text-brand-orange">โปรด</span> ถัดไป
+                {t.heroTitle1}<br/><span className="text-brand-orange">{t.heroTitle2}</span>{t.heroTitle3}
               </h2>
-              <p className="text-gray-500 text-base leading-relaxed mb-8 font-medium">แบ่งปันความประทับใจจากการอ่านร่วมกับคอมมูนิตี้คนรักตัวหนังสือ</p>
+              <p className="text-gray-500 text-base leading-relaxed mb-8 font-medium">{t.heroSubtitle}</p>
               {!user ? (
                 <button 
                   onClick={handleLogin}
                   className="bg-black text-white px-8 py-4 rounded-2xl font-black flex items-center gap-3 hover:scale-105 transition-transform shadow-xl shadow-black/10 uppercase tracking-tight"
                 >
-                  เริ่มร่วมแบ่งปัน
+                  {t.startSharing}
                   <Search size={20} />
                 </button>
               ) : (
@@ -299,7 +315,7 @@ export default function App() {
                   onClick={() => setIsModalOpen(true)}
                   className="bg-brand-orange text-white px-8 py-4 rounded-2xl font-black flex items-center gap-3 hover:scale-105 transition-transform shadow-xl shadow-brand-orange/20 uppercase tracking-tight"
                 >
-                  เพิ่มการแนะนำของคุณ
+                  {t.addRecommendation}
                   <Plus size={20} strokeWidth={3} />
                 </button>
               )}
@@ -319,9 +335,9 @@ export default function App() {
 
           <div id="recommendations-section" className="flex flex-col gap-8">
             <div className="flex items-center justify-between">
-              <h2 className="text-3xl font-black italic tracking-tight uppercase">แนะนำโดยเพื่อนนักอ่าน</h2>
+              <h2 className="text-3xl font-black italic tracking-tight uppercase">{t.recommendedByReaders}</h2>
               <div className="text-xs font-black text-gray-400 uppercase tracking-widest">
-                {filteredBooks.length} เล่ม
+                {filteredBooks.length} {t.booksCount}
               </div>
             </div>
 
@@ -355,8 +371,8 @@ export default function App() {
                     <div className="w-16 h-16 bg-brand-orange text-white rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg shadow-brand-orange/20">
                       <Plus size={32} strokeWidth={3} />
                     </div>
-                    <div className="text-sm font-black text-brand-orange uppercase tracking-widest leading-relaxed">
-                      ลงรูปแนะนำ<br/>หนังสือของคุณ
+                    <div className="text-sm font-black text-brand-orange uppercase tracking-widest leading-relaxed whitespace-pre-line">
+                      {t.shareYourRecommendation}
                     </div>
                   </motion.div>
                 )}
@@ -368,8 +384,8 @@ export default function App() {
                 </div>
                 <div className="text-center space-y-4">
                   <div>
-                    <p className="font-serif text-3xl text-stone-400 italic font-black">ยังไม่พบผลลัพธ์</p>
-                    <p className="text-xs font-black uppercase tracking-widest text-stone-300">ลองเปลี่ยนหมวดหมู่หรือคำค้นหาดูนะ</p>
+                    <p className="font-serif text-3xl text-stone-400 italic font-black">{t.noResults}</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-stone-300">{t.tryChanging}</p>
                   </div>
                   {user && (
                     <button 
@@ -377,7 +393,7 @@ export default function App() {
                       className="bg-brand-orange text-white px-8 py-3 rounded-full text-xs font-black hover:bg-orange-700 transition-all shadow-lg shadow-brand-orange/20 uppercase tracking-widest mx-auto flex items-center gap-2"
                     >
                       <Plus size={16} strokeWidth={3} />
-                      เริ่มแนะนำหนังสือเล่มแรกเลย
+                      {t.shareFirstBook}
                     </button>
                   )}
                 </div>
@@ -389,7 +405,7 @@ export default function App() {
 
       {/* Sticky Status Bar */}
       <footer className="bg-white border-t border-black/5 px-4 md:px-10 py-5 flex flex-col md:flex-row items-center justify-between text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] gap-4">
-        <div>สถิติวันนี้: แนะนำ {books.length} เล่ม | ระบบพร้อมใช้งาน</div>
+        <div>{t.stats} {books.length} {t.booksCount} | {t.statusReady}</div>
         <div className="flex items-center gap-6">
           <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></span> ONLINE</span>
           <span>v. 1.0.0 (Bold Edition)</span>
@@ -401,6 +417,7 @@ export default function App() {
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         onSuccess={() => {}}
+        lang={lang}
       />
 
       <EditBookModal
@@ -411,6 +428,7 @@ export default function App() {
         }}
         onSuccess={() => {}}
         book={editingBook}
+        lang={lang}
       />
 
       <DeleteConfirmationModal
@@ -421,6 +439,7 @@ export default function App() {
           setDeletingBook(null);
         }}
         onConfirm={handleDeleteBook}
+        lang={lang}
       />
     </div>
   );

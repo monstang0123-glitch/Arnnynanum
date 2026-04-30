@@ -1,15 +1,18 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AlertTriangle, Trash2, X } from 'lucide-react';
+import { translations, Language } from '../lib/translations';
 
 interface DeleteConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
   title: string;
+  lang: Language;
 }
 
-export default function DeleteConfirmationModal({ isOpen, onClose, onConfirm, title }: DeleteConfirmationModalProps) {
+export default function DeleteConfirmationModal({ isOpen, onClose, onConfirm, title, lang }: DeleteConfirmationModalProps) {
+  const t = translations[lang];
   return (
     <AnimatePresence>
       {isOpen && (
@@ -31,11 +34,11 @@ export default function DeleteConfirmationModal({ isOpen, onClose, onConfirm, ti
               <AlertTriangle className="text-red-500" size={32} />
             </div>
             
-            <h3 className="text-xl font-black text-brand-text mb-2 italic tracking-tighter">ยืนยันการลบ?</h3>
+            <h3 className="text-xl font-black text-brand-text mb-2 italic tracking-tighter">{t.confirmDelete}</h3>
             <p className="text-stone-500 text-sm font-bold mb-8 leading-relaxed">
-              คุณแน่ใจหรือไม่ว่าต้องการลบคำแนะนำ <br/>
+              {t.deleteWarning} <br/>
               <span className="text-brand-text">"{title}"</span><br/>
-              การกระทำนี้ไม่สามารถย้อนกลับได้
+              {t.undoneWarning}
             </p>
 
             <div className="flex flex-col gap-3">
@@ -44,13 +47,13 @@ export default function DeleteConfirmationModal({ isOpen, onClose, onConfirm, ti
                 className="w-full py-4 bg-red-500 text-white font-black uppercase tracking-widest rounded-xl hover:bg-red-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-500/20"
               >
                 <Trash2 size={18} />
-                ลบโพสต์เลย
+                {t.deletePost}
               </button>
               <button
                 onClick={onClose}
                 className="w-full py-4 bg-stone-100 text-stone-500 font-black uppercase tracking-widest rounded-xl hover:bg-stone-200 transition-all"
               >
-                ยกเลิก
+                {t.cancel}
               </button>
             </div>
 

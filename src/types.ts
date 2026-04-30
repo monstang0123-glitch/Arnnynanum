@@ -19,26 +19,26 @@ export interface Like {
 }
 
 export type Genre = 
-  | 'นิยาย' 
-  | 'วิชาการ/สารคดี' 
-  | 'สืบสวนสอบสวน' 
-  | 'ไซไฟ/แฟนตาซี' 
-  | 'ประวัติศาสตร์' 
-  | 'จิตวิทยา/พัฒนาตนเอง' 
-  | 'ธุรกิจ/การเงิน' 
-  | 'การ์ตูน/มังงะ' 
-  | 'อื่นๆ';
+  | 'Fiction' 
+  | 'Academic/Doc' 
+  | 'Mystery/Crime' 
+  | 'Sci-Fi/Fantasy' 
+  | 'History' 
+  | 'Psychology' 
+  | 'Business' 
+  | 'Comics' 
+  | 'Other';
 
 export const GENRES: Genre[] = [
-  'นิยาย',
-  'วิชาการ/สารคดี',
-  'สืบสวนสอบสวน',
-  'ไซไฟ/แฟนตาซี',
-  'ประวัติศาสตร์',
-  'จิตวิทยา/พัฒนาตนเอง',
-  'ธุรกิจ/การเงิน',
-  'การ์ตูน/มังงะ',
-  'อื่นๆ'
+  'Fiction',
+  'Academic/Doc',
+  'Mystery/Crime',
+  'Sci-Fi/Fantasy',
+  'History',
+  'Psychology',
+  'Business',
+  'Comics',
+  'Other'
 ];
 
 export enum OperationType {

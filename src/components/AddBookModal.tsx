@@ -7,19 +7,22 @@ import { db, auth } from '../lib/firebase';
 import { GENRES, Genre, OperationType } from '../types';
 import { handleFirestoreError } from '../lib/errorUtils';
 import getCroppedImg from '../lib/cropImage';
+import { translations, Language } from '../lib/translations';
 
 interface AddBookModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  lang: Language;
 }
 
-export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModalProps) {
+export default function AddBookModal({ isOpen, onClose, onSuccess, lang }: AddBookModalProps) {
+  const t = translations[lang];
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     author: '',
-    genre: 'นิยาย' as Genre,
+    genre: 'Fiction' as Genre,
     description: '',
     coverUrl: ''
   });
@@ -42,7 +45,7 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
 
     if (file) {
       if (file.size > 2 * 1024 * 1024) { // Increase limit slightly as we will crop/compress
-        alert('รูปภาพต้องมีขนาดไม่เกิน 2MB');
+        alert(t.maxSize.replace(/[()]/g, ''));
         return;
       }
 
@@ -75,7 +78,7 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
     e.preventDefault();
     if (!auth.currentUser) return;
     if (!formData.coverUrl) {
-      alert('กรุณาเลือกรูปภาพหน้าปก');
+      alert(t.coverImage.replace('*', '').trim());
       return;
     }
 
@@ -95,13 +98,13 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
       setFormData({
         title: '',
         author: '',
-        genre: 'นิยาย',
+        genre: 'Fiction',
         description: '',
         coverUrl: ''
       });
     } catch (error: any) {
       console.error('Submission error:', error);
-      alert('ไม่สามารถเพิ่มหนังสือได้: ' + (error.message || 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ'));
+      alert('Could not add book: ' + (error.message || 'Unknown error occurred'));
       handleFirestoreError(error, OperationType.CREATE, path);
     } finally {
       setLoading(false);
@@ -127,7 +130,7 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
             id="add-book-modal"
           >
             <div className="p-10 pb-6 border-bottom border-black/5 flex items-center justify-between">
-              <h2 className="font-black text-3xl tracking-tighter italic text-brand-text">แนะนำหนังสือใหม่</h2>
+              <h2 className="font-black text-3xl tracking-tighter italic text-brand-text">{t.newRecommendation}</h2>
               <button
                 onClick={onClose}
                 className="p-3 hover:bg-black/5 rounded-full transition-colors text-stone-400 hover:text-brand-text"
@@ -139,7 +142,7 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
             <form onSubmit={handleSubmit} className="p-10 pt-0 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
               <div className="space-y-4">
                 <label className="text-xs font-black uppercase tracking-[0.2em] text-brand-orange ml-1">
-                  รูปหน้าปก *
+                  {t.coverImage}
                 </label>
                 <label 
                   htmlFor="file-upload"
@@ -155,7 +158,7 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
                       <img src={preview} alt="Preview" className="w-full h-full object-contain pointer-events-none" />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
                         <Plus className="text-white" size={32} />
-                        <span className="text-white text-xs font-black uppercase">เปลี่ยนรูป</span>
+                        <span className="text-white text-xs font-black uppercase">{t.changeImage}</span>
                       </div>
                     </>
                   ) : (
@@ -164,7 +167,7 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
                         <Plus size={32} />
                       </div>
                       <p className="text-sm font-bold text-stone-400 group-hover:text-brand-text transition-colors uppercase tracking-widest leading-relaxed">
-                        คลิกหรือลากรูปภาพมาวาง<br/><span className="text-xs font-medium">(สูงสุด 2MB)</span>
+                        {t.clickOrDrag}<br/><span className="text-xs font-medium">{t.maxSize}</span>
                       </p>
                     </div>
                   )}
@@ -180,14 +183,14 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
 
               <div className="space-y-2">
                 <label className="text-xs font-black uppercase tracking-[0.2em] text-brand-orange ml-1">
-                  ชื่อหนังสือ *
+                  {t.bookTitleLabel}
                 </label>
                 <input
                   required
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="เช่น มหัศจรรย์ร้านชำของคุณนามิยะ"
+                  placeholder={t.bookTitlePlaceholder}
                   className="w-full px-6 py-4 bg-white border border-black/10 rounded-2xl focus:ring-4 focus:ring-brand-orange/5 focus:border-brand-orange transition-all font-bold text-brand-text placeholder:text-stone-300"
                 />
               </div>
@@ -195,20 +198,20 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-xs font-black uppercase tracking-[0.2em] text-brand-orange ml-1">
-                    ผู้เขียน *
+                    {t.authorLabel}
                   </label>
                   <input
                     required
                     type="text"
                     value={formData.author}
                     onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                    placeholder="ชื่อนักเขียน"
+                    placeholder={t.authorPlaceholder}
                     className="w-full px-6 py-4 bg-white border border-black/10 rounded-2xl focus:ring-4 focus:ring-brand-orange/5 focus:border-brand-orange transition-all font-bold text-brand-text placeholder:text-stone-300"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-black uppercase tracking-[0.2em] text-brand-orange ml-1">
-                    หมวดหมู่ *
+                    {t.categoryLabel}
                   </label>
                   <select
                     value={formData.genre}
@@ -216,7 +219,7 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
                     className="w-full px-6 py-4 bg-white border border-black/10 rounded-2xl focus:ring-4 focus:ring-brand-orange/5 focus:border-brand-orange transition-all font-bold text-brand-text appearance-none cursor-pointer"
                   >
                     {GENRES.map((g) => (
-                      <option key={g} value={g}>{g}</option>
+                      <option key={g} value={g}>{t[g.toLowerCase().replace('/', '').replace(/-/g, '') as keyof typeof t] || g}</option>
                     ))}
                   </select>
                 </div>
@@ -224,13 +227,13 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
 
               <div className="space-y-2">
                 <label className="text-xs font-black uppercase tracking-[0.2em] text-brand-orange ml-1">
-                  ทำไมถึงแนะนำเล่มนี้?
+                  {t.whyRecommend}
                 </label>
                 <textarea
                   rows={3}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="แชร์ความประทับใจสั้นๆ..."
+                  placeholder={t.shareImpression}
                   className="w-full px-6 py-4 bg-white border border-black/10 rounded-2xl focus:ring-4 focus:ring-brand-orange/5 focus:border-brand-orange transition-all font-bold text-brand-text placeholder:text-stone-300 resize-none"
                 />
               </div>
@@ -246,7 +249,7 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
                   ) : (
                     <>
                       <Plus size={24} strokeWidth={3} />
-                      เพิ่มคำแนะนำ
+                      {t.shareNow}
                     </>
                   )}
                 </button>
@@ -273,9 +276,9 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
                       onZoomChange={setZoom}
                     />
                   </div>
-                  <div className="p-8 bg-black/80 flex flex-col gap-6">
+                   <div className="p-8 bg-black/80 flex flex-col gap-6">
                     <div className="flex flex-col gap-2">
-                      <label className="text-xs font-black uppercase tracking-[0.2em] text-gray-500">ซูม</label>
+                      <label className="text-xs font-black uppercase tracking-[0.2em] text-gray-500">{t.zoom}</label>
                       <input
                         type="range"
                         value={zoom}
@@ -292,14 +295,14 @@ export default function AddBookModal({ isOpen, onClose, onSuccess }: AddBookModa
                         onClick={() => setImageToCrop(null)}
                         className="flex-1 py-4 text-white font-black uppercase tracking-widest bg-white/10 rounded-xl hover:bg-white/20 transition-all"
                       >
-                        ยกเลิก
+                        {t.cancel}
                       </button>
                       <button
                         onClick={handleApplyCrop}
                         className="flex-1 py-4 bg-brand-orange text-white font-black uppercase tracking-widest rounded-xl hover:bg-orange-700 transition-all flex items-center justify-center gap-2"
                       >
                         <Crop size={20} />
-                        ยืนยันขนาดรูป
+                        {t.applyCrop}
                       </button>
                     </div>
                   </div>

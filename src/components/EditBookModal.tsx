@@ -7,20 +7,23 @@ import { db, auth } from '../lib/firebase';
 import { GENRES, Genre, OperationType, Book } from '../types';
 import { handleFirestoreError } from '../lib/errorUtils';
 import getCroppedImg from '../lib/cropImage';
+import { translations, Language } from '../lib/translations';
 
 interface EditBookModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
   book: Book | null;
+  lang: Language;
 }
 
-export default function EditBookModal({ isOpen, onClose, onSuccess, book }: EditBookModalProps) {
+export default function EditBookModal({ isOpen, onClose, onSuccess, book, lang }: EditBookModalProps) {
+  const t = translations[lang];
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     author: '',
-    genre: 'นิยาย' as Genre,
+    genre: 'Fiction' as Genre,
     description: '',
     coverUrl: ''
   });
@@ -56,7 +59,7 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, book }: Edit
 
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
-        alert('รูปภาพต้องมีขนาดไม่เกิน 2MB');
+        alert(t.maxSize.replace(/[()]/g, ''));
         return;
       }
 
@@ -89,7 +92,7 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, book }: Edit
     e.preventDefault();
     if (!auth.currentUser || !book || !book.id) return;
     if (!formData.coverUrl) {
-      alert('กรุณาเลือกรูปภาพหน้าปก');
+      alert(t.coverImage.replace('*', '').trim());
       return;
     }
 
@@ -108,7 +111,7 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, book }: Edit
       onClose();
     } catch (error: any) {
       console.error('Update error:', error);
-      alert('ไม่สามารถแก้ไขข้อมูลได้: ' + (error.message || 'เกิดข้อผิดพลาด'));
+      alert('Update failed: ' + (error.message || 'Error occurred'));
       handleFirestoreError(error, OperationType.UPDATE, path);
     } finally {
       setLoading(false);
@@ -133,7 +136,7 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, book }: Edit
             className="relative bg-brand-bg w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden border border-black/5"
           >
             <div className="p-10 pb-6 border-bottom border-black/5 flex items-center justify-between">
-              <h2 className="font-black text-3xl tracking-tighter italic text-brand-text">แก้ไขคำแนะนำ</h2>
+              <h2 className="font-black text-3xl tracking-tighter italic text-brand-text">{t.editRecommendation}</h2>
               <button
                 onClick={onClose}
                 className="p-3 hover:bg-black/5 rounded-full transition-colors text-stone-400 hover:text-brand-text"
@@ -145,7 +148,7 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, book }: Edit
             <form onSubmit={handleSubmit} className="p-10 pt-0 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
               <div className="space-y-4">
                 <label className="text-xs font-black uppercase tracking-[0.2em] text-brand-orange ml-1">
-                  รูปหน้าปก *
+                  {t.coverImage}
                 </label>
                 <label 
                   htmlFor="edit-file-upload"
@@ -161,7 +164,7 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, book }: Edit
                       <img src={preview} alt="Preview" className="w-full h-full object-contain pointer-events-none" />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
                         <Plus className="text-white" size={32} />
-                        <span className="text-white text-xs font-black uppercase">เปลี่ยนรูป</span>
+                        <span className="text-white text-xs font-black uppercase">{t.changeImage}</span>
                       </div>
                     </>
                   ) : (
@@ -170,7 +173,7 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, book }: Edit
                         <Plus size={32} />
                       </div>
                       <p className="text-sm font-bold text-stone-400 group-hover:text-brand-text transition-colors uppercase tracking-widest leading-relaxed">
-                        คลิกหรือลากรูปภาพมาวาง<br/><span className="text-xs font-medium">(สูงสุด 2MB)</span>
+                        {t.clickOrDrag}<br/><span className="text-xs font-medium">{t.maxSize}</span>
                       </p>
                     </div>
                   )}
@@ -186,14 +189,14 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, book }: Edit
 
               <div className="space-y-2">
                 <label className="text-xs font-black uppercase tracking-[0.2em] text-brand-orange ml-1">
-                  ชื่อหนังสือ *
+                  {t.bookTitleLabel}
                 </label>
                 <input
                   required
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="เช่น มหัศจรรย์ร้านชำของคุณนามิยะ"
+                  placeholder={t.bookTitlePlaceholder}
                   className="w-full px-6 py-4 bg-white border border-black/10 rounded-2xl focus:ring-4 focus:ring-brand-orange/5 focus:border-brand-orange transition-all font-bold text-brand-text placeholder:text-stone-300"
                 />
               </div>
@@ -201,20 +204,20 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, book }: Edit
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-xs font-black uppercase tracking-[0.2em] text-brand-orange ml-1">
-                    ผู้เขียน *
+                    {t.authorLabel}
                   </label>
                   <input
                     required
                     type="text"
                     value={formData.author}
                     onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                    placeholder="ชื่อนักเขียน"
+                    placeholder={t.authorPlaceholder}
                     className="w-full px-6 py-4 bg-white border border-black/10 rounded-2xl focus:ring-4 focus:ring-brand-orange/5 focus:border-brand-orange transition-all font-bold text-brand-text placeholder:text-stone-300"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-black uppercase tracking-[0.2em] text-brand-orange ml-1">
-                    หมวดหมู่ *
+                    {t.categoryLabel}
                   </label>
                   <select
                     value={formData.genre}
@@ -222,7 +225,7 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, book }: Edit
                     className="w-full px-6 py-4 bg-white border border-black/10 rounded-2xl focus:ring-4 focus:ring-brand-orange/5 focus:border-brand-orange transition-all font-bold text-brand-text appearance-none cursor-pointer"
                   >
                     {GENRES.map((g) => (
-                      <option key={g} value={g}>{g}</option>
+                      <option key={g} value={g}>{t[g.toLowerCase().replace('/', '').replace(/-/g, '') as keyof typeof t] || g}</option>
                     ))}
                   </select>
                 </div>
@@ -230,13 +233,13 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, book }: Edit
 
               <div className="space-y-2">
                 <label className="text-xs font-black uppercase tracking-[0.2em] text-brand-orange ml-1">
-                  ทำไมถึงแนะนำเล่มนี้?
+                  {t.whyRecommend}
                 </label>
                 <textarea
                   rows={3}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="แชร์ความประทับใจสั้นๆ..."
+                  placeholder={t.shareImpression}
                   className="w-full px-6 py-4 bg-white border border-black/10 rounded-2xl focus:ring-4 focus:ring-brand-orange/5 focus:border-brand-orange transition-all font-bold text-brand-text placeholder:text-stone-300 resize-none"
                 />
               </div>
@@ -252,7 +255,7 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, book }: Edit
                   ) : (
                     <>
                       <Save size={24} strokeWidth={3} />
-                      บันทึกการแก้ไข
+                      {t.saveChanges}
                     </>
                   )}
                 </button>
@@ -278,9 +281,9 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, book }: Edit
                       onZoomChange={setZoom}
                     />
                   </div>
-                  <div className="p-8 bg-black/80 flex flex-col gap-6">
+                   <div className="p-8 bg-black/80 flex flex-col gap-6">
                     <div className="flex flex-col gap-2">
-                      <label className="text-xs font-black uppercase tracking-[0.2em] text-gray-500">ซูม</label>
+                      <label className="text-xs font-black uppercase tracking-[0.2em] text-gray-500">{t.zoom}</label>
                       <input
                         type="range"
                         value={zoom}
@@ -297,14 +300,14 @@ export default function EditBookModal({ isOpen, onClose, onSuccess, book }: Edit
                         onClick={() => setImageToCrop(null)}
                         className="flex-1 py-4 text-white font-black uppercase tracking-widest bg-white/10 rounded-xl hover:bg-white/20 transition-all"
                       >
-                        ยกเลิก
+                        {t.cancel}
                       </button>
                       <button
                         onClick={handleApplyCrop}
                         className="flex-1 py-4 bg-brand-orange text-white font-black uppercase tracking-widest rounded-xl hover:bg-orange-700 transition-all flex items-center justify-center gap-2"
                       >
                         <Crop size={20} />
-                        ยืนยันรูปภาพ
+                        {t.applyCrop}
                       </button>
                     </div>
                   </div>
