@@ -1,6 +1,6 @@
 {
-  "name": "num",
-  "description": "A community-driven book recommendation platform where readers can discover, search, and share their favorite reads with photos.",
+  "name": "อ่านนี่ (Arnnii)",
+  "description": "อ่านนี่ (Arnnii) - เว็บแนะนำหนังสือและรีวิวหนังสือคุณภาพ รวมหนังสือน่าอ่าน หนังสือใหม่ และสรุปหนังสือพัฒนาตัวเอง | A community book recommendation platform for discovering and sharing your next favorite read.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }
