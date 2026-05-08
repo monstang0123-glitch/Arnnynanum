@@ -45,6 +45,7 @@ export default function App() {
   const [likedBookIds, setLikedBookIds] = useState<string[]>([]);
   const [showOnlyLiked, setShowOnlyLiked] = useState(false);
   const [lang, setLang] = useState<Language>('EN');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const t = translations[lang];
 
@@ -169,8 +170,11 @@ export default function App() {
       <header className="sticky top-0 z-40 bg-brand-bg/80 backdrop-blur-md border-b border-black/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-10 h-24 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="text-4xl md:text-5xl font-black tracking-tighter uppercase cursor-default select-none group">
-              อ่าน<span className="text-brand-orange inline-block group-hover:rotate-12 transition-transform duration-300">นี่</span>
+            <div 
+              className="text-4xl md:text-5xl font-black tracking-tighter uppercase cursor-pointer select-none group"
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            >
+              อ่าน<span className={`text-brand-orange inline-block transition-transform duration-300 ${isSidebarOpen ? 'rotate-12' : 'rotate-0'}`}>นี่</span>
             </div>
           </div>
 
@@ -233,50 +237,52 @@ export default function App() {
 
       <main className="flex-1 flex flex-col md:flex-row max-w-7xl mx-auto w-full">
         {/* Sidebar: Categories */}
-        <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-black/5 p-6 md:p-10 flex flex-col gap-6">
-          <div className="text-xs font-black uppercase tracking-[0.2em] text-brand-orange mb-2">{t.myLibrary}</div>
-          <ul className="flex flex-col gap-3 mb-4">
-            <li 
-              onClick={() => {
-                setShowOnlyLiked(!showOnlyLiked);
-                if (!showOnlyLiked) setSelectedGenre('All');
-              }}
-              className={`px-4 py-3 rounded-xl font-bold text-base cursor-pointer transition-all flex items-center justify-between group ${showOnlyLiked ? 'bg-red-500 text-white shadow-lg shadow-red-500/20 scale-[1.02]' : 'bg-white border border-black/5 text-gray-400 hover:border-red-500/30 hover:text-red-500 shadow-sm'}`}
-            >
-              <div className="flex items-center gap-3">
-                <BookHeart size={18} fill={showOnlyLiked ? "currentColor" : "none"} />
-                {t.likedList}
-              </div>
-              <span className={`opacity-0 group-hover:opacity-100 transition-opacity ${showOnlyLiked ? 'opacity-100' : ''}`}>→</span>
-            </li>
-          </ul>
-
-          <div className="text-xs font-black uppercase tracking-[0.2em] text-brand-orange mb-2">{t.categories}</div>
-          <ul className="grid grid-cols-2 md:flex md:flex-col gap-3 overflow-x-auto md:overflow-x-visible pb-4 md:pb-0 scrollbar-hide">
-            <li 
-              onClick={() => {
-                setSelectedGenre('All');
-                setShowOnlyLiked(false);
-              }}
-              className={`px-4 py-3 rounded-xl font-bold text-base cursor-pointer transition-all text-center md:text-left flex items-center justify-between group ${selectedGenre === 'All' && !showOnlyLiked ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20 scale-[1.02]' : 'bg-white border border-black/5 text-gray-400 hover:border-brand-orange/30 hover:text-brand-text shadow-sm'}`}
-            >
-              {t.all}
-              <span className={`opacity-0 group-hover:opacity-100 transition-opacity ${selectedGenre === 'All' && !showOnlyLiked ? 'opacity-100' : ''}`}>→</span>
-            </li>
-            {GENRES.map(genre => (
+        <aside className={`transition-all duration-300 ease-in-out border-black/5 flex flex-col gap-6 overflow-hidden md:sticky md:top-24 md:self-start md:h-[calc(100vh-6rem)] ${isSidebarOpen ? 'w-full md:w-64 p-6 md:p-10 border-b md:border-b-0 md:border-r opacity-100 sticky top-24 z-30 bg-brand-bg/95 backdrop-blur-sm' : 'w-0 p-0 border-0 opacity-0 md:border-r-0'}`}>
+          <div className={`flex flex-col gap-6 w-full ${isSidebarOpen ? 'flex' : 'hidden'}`}>
+            <div className="text-xs font-black uppercase tracking-[0.2em] text-brand-orange mb-2">{t.myLibrary}</div>
+            <ul className="flex flex-col gap-3 mb-4">
               <li 
-                key={genre}
                 onClick={() => {
-                  setSelectedGenre(genre);
+                  setShowOnlyLiked(!showOnlyLiked);
+                  if (!showOnlyLiked) setSelectedGenre('All');
+                }}
+                className={`px-4 py-3 rounded-xl font-bold text-base cursor-pointer transition-all flex items-center justify-between group ${showOnlyLiked ? 'bg-red-500 text-white shadow-lg shadow-red-500/20 scale-[1.02]' : 'bg-white border border-black/5 text-gray-400 hover:border-red-500/30 hover:text-red-500 shadow-sm'}`}
+              >
+                <div className="flex items-center gap-3">
+                  <BookHeart size={18} fill={showOnlyLiked ? "currentColor" : "none"} />
+                  {t.likedList}
+                </div>
+                <span className={`opacity-0 group-hover:opacity-100 transition-opacity ${showOnlyLiked ? 'opacity-100' : ''}`}>→</span>
+              </li>
+            </ul>
+
+            <div className="text-xs font-black uppercase tracking-[0.2em] text-brand-orange mb-2">{t.categories}</div>
+            <ul className="grid grid-cols-2 md:flex md:flex-col gap-3 overflow-x-auto md:overflow-x-visible pb-4 md:pb-0 scrollbar-hide">
+              <li 
+                onClick={() => {
+                  setSelectedGenre('All');
                   setShowOnlyLiked(false);
                 }}
-                className={`px-4 py-3 rounded-xl font-bold text-base cursor-pointer transition-all text-center md:text-left flex items-center justify-between group ${selectedGenre === genre ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20 scale-[1.02]' : 'bg-white border border-black/5 text-gray-400 hover:border-brand-orange/30 hover:text-brand-text shadow-sm'}`}
+                className={`px-4 py-3 rounded-xl font-bold text-base cursor-pointer transition-all text-center md:text-left flex items-center justify-between group ${selectedGenre === 'All' && !showOnlyLiked ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20 scale-[1.02]' : 'bg-white border border-black/5 text-gray-400 hover:border-brand-orange/30 hover:text-brand-text shadow-sm'}`}
               >
-                {t[genre.toLowerCase().replace('/', '').replace(/-/g, '') as keyof typeof t] || genre}
-                <span className={`opacity-0 group-hover:opacity-100 transition-opacity ${selectedGenre === genre ? 'opacity-100' : ''}`}>→</span>
+                {t.all}
+                <span className={`opacity-0 group-hover:opacity-100 transition-opacity ${selectedGenre === 'All' && !showOnlyLiked ? 'opacity-100' : ''}`}>→</span>
               </li>
-            ))}
-          </ul>
+              {GENRES.map(genre => (
+                <li 
+                  key={genre}
+                  onClick={() => {
+                    setSelectedGenre(genre);
+                    setShowOnlyLiked(false);
+                  }}
+                  className={`px-4 py-3 rounded-xl font-bold text-base cursor-pointer transition-all text-center md:text-left flex items-center justify-between group ${selectedGenre === genre ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20 scale-[1.02]' : 'bg-white border border-black/5 text-gray-400 hover:border-brand-orange/30 hover:text-brand-text shadow-sm'}`}
+                >
+                  {t[genre.toLowerCase().replace('/', '').replace(/-/g, '') as keyof typeof t] || genre}
+                  <span className={`opacity-0 group-hover:opacity-100 transition-opacity ${selectedGenre === genre ? 'opacity-100' : ''}`}>→</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </aside>
 
         {/* Content Area */}
@@ -324,12 +330,28 @@ export default function App() {
               className="relative cursor-pointer"
               onClick={() => document.getElementById('recommendations-section')?.scrollIntoView({ behavior: 'smooth' })}
             >
-              <div className="w-48 h-64 bg-stone-100 rounded-2xl shadow-2xl overflow-hidden flex items-center justify-center border-4 border-white transform rotate-6 group-hover:rotate-2 transition-transform duration-500">
-                <div className="bg-brand-orange w-full h-full p-6 flex flex-col justify-between text-white">
-                  <div className="text-3xl font-black leading-[0.9] tracking-tighter">READ<br/>NEXT</div>
-                  <div className="text-[10px] font-black uppercase tracking-widest opacity-70">Community Library</div>
+              {books.length > 0 ? (
+                <div className="w-48 h-64 bg-white rounded-2xl shadow-2xl overflow-hidden flex items-center justify-center border-4 border-white transform rotate-6 group-hover:rotate-2 transition-transform duration-500 relative">
+                  <img 
+                    src={books[0].coverUrl} 
+                    alt={books[0].title}
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Branding Overlay */}
+                  <div className="absolute inset-0 bg-brand-orange/20 mix-blend-multiply" />
+                  <div className="absolute inset-0 p-5 flex flex-col justify-between text-white drop-shadow-lg">
+                    <div className="text-3xl font-black leading-[0.9] tracking-tighter">READ<br/>NEXT</div>
+                    <div className="text-[10px] font-black uppercase tracking-widest opacity-90 truncate">{books[0].title}</div>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="w-48 h-64 bg-stone-100 rounded-2xl shadow-2xl overflow-hidden flex items-center justify-center border-4 border-white transform rotate-6 group-hover:rotate-2 transition-transform duration-500">
+                  <div className="bg-brand-orange w-full h-full p-6 flex flex-col justify-between text-white">
+                    <div className="text-3xl font-black leading-[0.9] tracking-tighter">READ<br/>NEXT</div>
+                    <div className="text-[10px] font-black uppercase tracking-widest opacity-70">Community Library</div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
