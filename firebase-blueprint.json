@@ -42,15 +42,32 @@
         },
         "addedByName": {
           "type": "string",
-           "description": "Display name of the user"
+          "description": "Display name of the user"
         },
         "createdAt": {
           "type": "string",
           "format": "date-time",
           "description": "Timestamp when the book was added"
+        },
+        "commentCount": {
+          "type": "number",
+          "description": "Total number of comments"
         }
       },
       "required": ["title", "author", "genre", "addedBy", "createdAt"]
+    },
+    "Comment": {
+      "title": "Book Comment",
+      "description": "A comment left by a user on a book recommendation.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userPhoto": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "userName", "text", "createdAt"]
     }
   },
   "firestore": {
@@ -61,6 +78,10 @@
     "likes": {
       "schema": "Like",
       "description": "Relational collection tracking user likes on books"
+    },
+    "books/{bookId}/comments": {
+      "schema": "Comment",
+      "description": "Subcollection of comments for a specific book"
     }
   }
 }

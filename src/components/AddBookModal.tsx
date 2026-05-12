@@ -90,6 +90,7 @@ export default function AddBookModal({ isOpen, onClose, onSuccess, lang }: AddBo
         addedBy: auth.currentUser.uid,
         addedByName: auth.currentUser.displayName,
         addedByEmail: auth.currentUser.email,
+        commentCount: 0,
         createdAt: serverTimestamp()
       });
       onSuccess();

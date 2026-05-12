@@ -168,8 +168,16 @@ export default function App() {
     <div className="min-h-screen bg-brand-bg text-brand-text font-sans selection:bg-brand-orange selection:text-white flex flex-col">
       {/* Navigation */}
       <header className="sticky top-0 z-40 bg-brand-bg/80 backdrop-blur-md border-b border-black/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-10 h-24 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-10 h-24 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="p-2 hover:bg-black/5 rounded-xl transition-colors flex flex-col gap-1.5 w-10 h-10 items-center justify-center group"
+              aria-label="Toggle Menu"
+            >
+              <div className={`w-6 h-0.5 bg-brand-text transition-all duration-300 ${isSidebarOpen ? 'rotate-45 translate-y-1' : ''}`} />
+              <div className={`w-6 h-0.5 bg-brand-text transition-all duration-300 ${isSidebarOpen ? '-rotate-45 -translate-y-1' : ''}`} />
+            </button>
             <div 
               className="text-4xl md:text-5xl font-black tracking-tighter uppercase cursor-pointer select-none group"
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -368,27 +376,28 @@ export default function App() {
                 <Loader2 className="animate-spin" size={40} />
               </div>
             ) : filteredBooks.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8 pb-8 md:pb-0 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 snap-x snap-mandatory scroll-smooth">
                 <AnimatePresence mode="popLayout">
                   {filteredBooks.map((book) => (
-                    <BookCard 
-                      key={book.id} 
-                      book={book} 
-                      isLiked={likedBookIds.includes(book.id || '')}
-                      onToggleLike={() => handleToggleLike(book.id || '')}
-                      onEdit={() => handleEditBook(book)}
-                      onDelete={() => handleOpenDeleteConfirm(book)}
-                    />
+                    <div key={book.id} className="min-w-[280px] sm:min-w-0 snap-start">
+                      <BookCard 
+                        book={book} 
+                        isLiked={likedBookIds.includes(book.id || '')}
+                        onToggleLike={() => handleToggleLike(book.id || '')}
+                        onEdit={() => handleEditBook(book)}
+                        onDelete={() => handleOpenDeleteConfirm(book)}
+                      />
+                    </div>
                   ))}
                 </AnimatePresence>
-
+ 
                 {/* Upload Button Card */}
                 {user && (
                   <motion.div 
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setIsModalOpen(true)}
-                    className="bg-orange-50/50 p-6 rounded-[2rem] border-2 border-dashed border-brand-orange/30 flex flex-col items-center justify-center text-center group cursor-pointer hover:bg-orange-100/50 transition-colors h-full min-h-[320px]"
+                    className="min-w-[280px] sm:min-w-0 snap-start bg-orange-50/50 p-6 rounded-[2rem] border-2 border-dashed border-brand-orange/30 flex flex-col items-center justify-center text-center group cursor-pointer hover:bg-orange-100/50 transition-colors h-full min-h-[320px]"
                   >
                     <div className="w-16 h-16 bg-brand-orange text-white rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg shadow-brand-orange/20">
                       <Plus size={32} strokeWidth={3} />

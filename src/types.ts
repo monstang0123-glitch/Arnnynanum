@@ -10,6 +10,16 @@ export interface Book {
   addedBy: string;
   addedByName?: string;
   createdAt: Timestamp | Date;
+  commentCount?: number;
+}
+
+export interface Comment {
+  id?: string;
+  userId: string;
+  userName: string;
+  userPhoto?: string;
+  text: string;
+  createdAt: Timestamp | Date;
 }
 
 export interface Like {

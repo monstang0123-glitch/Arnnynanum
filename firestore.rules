@@ -35,7 +35,17 @@ service cloud.firestore {
         && (data.description == null || (data.description is string && data.description.size() <= 1000))
         && (data.coverUrl == null || (data.coverUrl is string && data.coverUrl.size() <= 1500000))
         && data.addedBy == request.auth.uid
-        && (isUpdate || data.createdAt == request.time);
+        && (isUpdate || data.createdAt == request.time)
+        && (data.get('commentCount', 0) is number);
+    }
+
+    function isValidComment(data) {
+      return data.keys().hasAll(['userId', 'userName', 'text', 'createdAt'])
+        && data.userId == request.auth.uid
+        && data.userName is string && data.userName.size() <= 100
+        && data.text is string && data.text.size() <= 1000
+        && (data.userPhoto == null || (data.userPhoto is string && data.userPhoto.size() <= 1500000))
+        && data.createdAt == request.time;
     }
 
     // --- Collections ---
@@ -47,10 +57,18 @@ service cloud.firestore {
       
       allow create: if isSignedIn() && isValidBook(incoming(), false);
       allow delete: if isOwner(existing());
-      allow update: if isOwner(existing()) 
+      allow update: if (isOwner(existing()) 
         && isValidBook(incoming(), true)
         && incoming().addedBy == existing().addedBy
-        && incoming().createdAt == existing().createdAt;
+        && incoming().createdAt == existing().createdAt)
+        || (isSignedIn() && incoming().diff(existing()).affectedKeys().hasOnly(['commentCount'])
+            && (incoming().commentCount == existing().get('commentCount', 0) + 1));
+
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isSignedIn() && isValidComment(incoming());
+        allow delete: if isSignedIn() && (existing().userId == request.auth.uid || get(/databases/$(database)/documents/books/$(bookId)).data.addedBy == request.auth.uid);
+      }
     }
 
     match /likes/{likeId} {
